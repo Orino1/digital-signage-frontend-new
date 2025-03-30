@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, Suspense } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,7 +30,8 @@ const SetupNewDevice = () => {
 
     // new
     const router = useRouter();
-    const searchParams = useSearchParams();
+    //const searchParams = useSearchParams();
+
 
     const [isScanning, setIsScanning] = useState(false);
 
@@ -47,12 +48,16 @@ const SetupNewDevice = () => {
 		handleAuth()
 	})
 
-    useEffect(() => {
-        const pinQuery = searchParams.get("pin");
-        if (pinQuery) {
-            setPin(pinQuery);
-        }
-    }, [searchParams]);
+    const PinHandler = () => {
+        const searchParams = useSearchParams();
+        useEffect(() => {
+            const pinQuery = searchParams.get("pin");
+            if (pinQuery) {
+                setPin(pinQuery);
+            }
+        }, [searchParams]);
+        return null;
+    };
 
     const handleScan = (result: any) => {
         const url = result[0].rawValue;
@@ -306,6 +311,9 @@ const SetupNewDevice = () => {
                     </div>
                 </div>
             </div>
+            <Suspense fallback={null}>
+                <PinHandler />
+            </Suspense>
         </>
     );
 };
