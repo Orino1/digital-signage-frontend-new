@@ -39,6 +39,7 @@ const DevicesPage = () => {
 	const [newName, setNewName] = useState('');
 	const [sortKey, setSortKey] = useState<SortKey | null>('name');
 	const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+	const [isMobile, setIsMobile] = useState(false);
 
 	const fetchDevices = useCallback(async () => {
 		try {
@@ -71,6 +72,17 @@ const DevicesPage = () => {
 	useEffect(() => {
 		fetchDevices();
 		fetchSetups();
+
+		const handleResize = () => {
+            setIsMobile(window.innerWidth <= 768);
+        };
+
+        handleResize(); // Check on initial load
+        window.addEventListener('resize', handleResize);
+
+        return () => {
+            window.removeEventListener('resize', handleResize);
+        };
 	}, [fetchDevices]);
 
 	const fetchSetups = async () => {
@@ -193,10 +205,28 @@ const DevicesPage = () => {
 	const connectedDevices = filteredDevices.filter(device => device.device_connected).length;
 	const notConnectedDevices = filteredDevices.length - connectedDevices;
 
+
+    const mobileContainerStyle = {
+		display: 'flex',
+        flexDirection: 'column',
+		justifyContent: 'space-between',
+		alignItems: 'center',
+		gap: '20px',
+    };
+
+	const mobileBtnStyle = {
+		width: '100%',
+	}
+
+	const mobileTextStyle = {
+		textAlign: 'center'
+	}
+
+
 	return (
 		<div className="min-h-screen text-white p-6">
-			<div className="max-w-6xl mx-auto">
-				<div className="flex justify-between items-center my-16">
+			<div className="max-w-6xl mx-auto" >
+				<div className="flex justify-between items-center my-16" style={isMobile ? mobileContainerStyle : null}>
 					<input
 						type="text"
 						value={searchTerm}
@@ -204,14 +234,15 @@ const DevicesPage = () => {
 						placeholder="Search devices..."
 						className="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-400 text-black w-52"
 					/>
-					<p className="text-lg text-black dark:text-white p-0.5 rounded-md">
+					<p className="text-lg text-black dark:text-white p-0.5 rounded-md" style={isMobile ? mobileTextStyle : null}>
 						Online Devices: {connectedDevices} | Offline Devices: {notConnectedDevices} | Total: {connectedDevices + notConnectedDevices}
 					</p>
-					<div className="flex space-x-4">
+					<div className="flex space-x-4" >
 						<Button
 							variant="default"
 							className="bg-cyan-400 hover:bg-cyan-600 text-black font-bold"
 							onClick={handleDownload}
+							style={isMobile ? mobileBtnStyle : null}
 						>
 							<DownloadIcon className="mr-2 h-4 w-4" /> Download Software
 						</Button>
@@ -219,6 +250,7 @@ const DevicesPage = () => {
 							variant="default"
 							className="bg-green-500 hover:bg-green-600 text-black font-bold"
 							onClick={handleRegisterDevice}
+							style={isMobile ? mobileBtnStyle : null}
 						>
 							Register New Device
 						</Button>
