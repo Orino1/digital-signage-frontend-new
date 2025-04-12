@@ -46,6 +46,20 @@ const Snapshot = () => {
     const [device, setDevice] = useState<Device | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [snapshotUrl, setSnapshotUrl] = useState<string>("");
+    const [isMobile, setIsMobile] = useState<boolean>(false);
+
+    useEffect(() => {
+        const handleResize = () => {
+            setIsMobile(window.innerWidth <= 768);
+        };
+
+        handleResize(); // Check on initial load
+        window.addEventListener('resize', handleResize);
+
+        return () => {
+            window.removeEventListener('resize', handleResize);
+        };
+    }, [])
 
     useEffect(() => {
         if (deviceId) {
@@ -357,13 +371,41 @@ const Snapshot = () => {
     const assignedSetup = device?.scheduled_playlist_id ? playlists[device.scheduled_playlist_id] : undefined;
     const selectedSetupName = device?.scheduled_playlist_id ? playlists[device.scheduled_playlist_id] : undefined;
 
+    const mobileMainContainerStyle = {
+        display: 'flex',
+		justifyContent: 'space-between',
+    }
+
+    const mobileBtnsContainerStyle = {
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'flex-end',
+        gap: '5px',
+    }
+
+    const mobileSetupContainerStyle = {
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '5px',
+    }
+
+    const mobileSetupHeaderStyle = {
+        width: '100%',
+    }
+
+    const mobileSetupBodyStyle = {
+        width: '100%',
+        display: 'flex',
+        justifyContent: 'flex-end',
+    }
+
     return (
         <div className="min-h-screen p-6 flex flex-col container">
             <h1 className="text-3xl font-bold mb-6">Device Snapshot</h1>
 
-            <div className="mb-4 flex justify-between items-center">
+            <div className="mb-4 flex justify-between items-center" style={isMobile ? mobileMainContainerStyle : null}>
                 <p>Device: {device?.name || deviceId}</p>
-                <div className="space-x-2">
+                <div className="space-x-2" style={isMobile ? mobileBtnsContainerStyle : null}>
                     <Button
                         onClick={rebootDevice}
                         disabled={isRebooting}
@@ -393,9 +435,9 @@ const Snapshot = () => {
             <p className="mb-4">Location: {device?.location || 'N/A'}</p>
             <p className="mb-4">Last Seen: {convertToUserTimezone(device?.last_seen || '') || 'N/A'}</p>
 
-            <div className="flex justify-between items-center mb-8">
-                <h3 className="text-2xl font-semibold">Select Setup</h3>
-                <div className="flex items-center space-x-4">
+            <div className="flex justify-between items-center mb-8" style={isMobile ? mobileSetupContainerStyle : null}>
+                <h3 className="text-2xl font-semibold" style={isMobile ? mobileSetupHeaderStyle : null}>Select Setup</h3>
+                <div className="flex items-center space-x-4" style={isMobile ? mobileSetupBodyStyle : null}>
                     <Select onValueChange={handleSetupChange} value={selectedSetup || undefined}>
                         <SelectTrigger className="w-[180px]">
                             <SelectValue placeholder="Select Setup">
