@@ -56,8 +56,7 @@ const Setups = () => {
     const fetchSetups = async () => {
         try {
             const token = localStorage.getItem("authToken");
-            const tvToken = localStorage.getItem("tvAuthToken");
-            if (!token || !tvToken) {
+            if (!token) {
                 console.error("No auth token found");
                 router.push("/login");
                 return;
@@ -71,7 +70,7 @@ const Setups = () => {
                 }),
                 fetch(`${androidApi}scheduled_playlists`, {
                     headers: {
-                        Authorization: `Bearer ${tvToken}`,
+                        Authorization: `Bearer ${token}`,
                     },
                 }),
             ]);
@@ -131,8 +130,7 @@ const Setups = () => {
     const handleSavePlaylist = async (updatedPlaylist: PlaylistData) => {
         try {
             const token = localStorage.getItem("authToken");
-            const tvToken = localStorage.getItem("tvAuthToken");
-            if (!token || !tvToken) {
+            if (!token) {
                 console.error("No auth token found");
                 router.push("/login");
                 return;
@@ -158,7 +156,7 @@ const Setups = () => {
                 fetch(`${androidApi}scheduled_playlists`, {
                     method: "POST",
                     headers: {
-                        Authorization: `Bearer ${tvToken}`,
+                        Authorization: `Bearer ${token}`,
                         "Content-Type": "application/json",
                     },
                     body: JSON.stringify(adjustedData),

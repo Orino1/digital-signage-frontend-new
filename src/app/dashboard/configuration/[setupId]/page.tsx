@@ -82,8 +82,7 @@ const Configuration = () => {
     const fetchSetup = useCallback(async () => {
         try {
             const token = localStorage.getItem("authToken");
-            const tvToken = localStorage.getItem("tvAuthToken");
-            if (!token || !tvToken) {
+            if (!token) {
                 console.error("No auth token found");
                 router.push("/login");
                 return;
@@ -91,20 +90,17 @@ const Configuration = () => {
 
             const newSetup = setupId === "new" ? true : false;
             let correctApi = null;
-            let correctToken = null;
             if (!newSetup) {
                 correctApi = type === "tv" ? androidApi : raspApi;
-                correctToken = type === "tv" ? tvToken : token;
             } else {
                 correctApi = raspApi;
-                correctToken = token;
             }
 
             const response = await fetch(
                 `${correctApi}scheduled_playlists/${setupId}`,
                 {
                     headers: {
-                        Authorization: `Bearer ${correctToken}`,
+                        Authorization: `Bearer ${token}`,
                     },
                 }
             );
@@ -134,8 +130,7 @@ const Configuration = () => {
             setIsSaving(true);
             setError(null);
             const token = localStorage.getItem("authToken");
-            const tvToken = localStorage.getItem("tvAuthToken");
-            if (!token || !tvToken) {
+            if (!token) {
                 console.error("No auth token found");
                 router.push("/login");
                 return;
@@ -150,13 +145,10 @@ const Configuration = () => {
 
             const newSetup = setupId === "new" ? true : false;
             let correctApi = null;
-            let correctToken = null;
             if (!newSetup) {
                 correctApi = type === "tv" ? androidApi : raspApi;
-                correctToken = type === "tv" ? tvToken : token;
             } else {
                 correctApi = raspApi;
-                correctToken = token;
             }
 
             const method = setupId === "new" ? "POST" : "PUT";
@@ -175,7 +167,7 @@ const Configuration = () => {
                     fetch(`${androidApi}scheduled_playlists`, {
                         method: method,
                         headers: {
-                            Authorization: `Bearer ${tvToken}`,
+                            Authorization: `Bearer ${token}`,
                             "Content-Type": "application/json",
                         },
                         body: JSON.stringify(adjustedData),
@@ -193,7 +185,6 @@ const Configuration = () => {
             } else {
                 // update setup
                 const correctApi = type === "tv" ? androidApi : raspApi;
-                const correctToken = type === "tv" ? tvToken : token;
 
                 // make fethc call with correct with put method
                 const response = await fetch(
@@ -201,7 +192,7 @@ const Configuration = () => {
                     {
                         method: method,
                         headers: {
-                            Authorization: `Bearer ${correctToken}`,
+                            Authorization: `Bearer ${token}`,
                             "Content-Type": "application/json",
                         },
                         body: JSON.stringify(adjustedData),

@@ -56,8 +56,7 @@ const DevicesPage = () => {
     const fetchDevices = useCallback(async () => {
         try {
             const token = localStorage.getItem("authToken");
-            const tvToken = localStorage.getItem("tvAuthToken");
-            if (!token || !tvToken) {
+            if (!token) {
                 console.error("No auth token found");
                 router.push("/login");
                 return;
@@ -69,7 +68,7 @@ const DevicesPage = () => {
                     headers: { Authorization: `Bearer ${token}` },
                 }),
                 fetch(`${androidApi}devices`, {
-                    headers: { Authorization: `Bearer ${tvToken}` },
+                    headers: { Authorization: `Bearer ${token}` },
                 }),
             ]);
 
@@ -109,8 +108,7 @@ const DevicesPage = () => {
     const fetchSetups = async () => {
         try {
             const token = localStorage.getItem("authToken");
-            const tvToken = localStorage.getItem("tvAuthToken");
-            if (!token || !tvToken) {
+            if (!token) {
                 console.error("No auth token found");
                 return;
             }
@@ -124,7 +122,7 @@ const DevicesPage = () => {
                 }),
                 fetch(`${androidApi}scheduled_playlists`, {
                     headers: {
-                        Authorization: `Bearer ${tvToken}`,
+                        Authorization: `Bearer ${token}`,
                     },
                 }),
             ]);
@@ -177,29 +175,25 @@ const DevicesPage = () => {
     const handleNameChange = async () => {
         try {
             const token = localStorage.getItem("authToken");
-            const tvToken = localStorage.getItem("tvAuthToken");
-            if (!token || !tvToken) {
+            if (!token) {
                 console.error("No auth token found");
                 return;
             }
 
             //
             let correctApi = null;
-            let correctToken = null;
 
             if (selectedDevice?.tv) {
                 correctApi = androidApi;
-                correctToken = tvToken;
             } else {
                 correctApi = "/api/proxy/";
-                correctToken = token;
             }
             const response = await fetch(
                 `${correctApi}devices/${selectedDevice?.id}`,
                 {
                     method: "PUT",
                     headers: {
-                        Authorization: `Bearer ${correctToken}`,
+                        Authorization: `Bearer ${token}`,
                         "Content-Type": "application/json",
                     },
                     body: JSON.stringify({ name: newName }),

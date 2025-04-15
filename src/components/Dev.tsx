@@ -39,8 +39,7 @@ const Dev: React.FC = ({ setClicksCounter }) => {
 
     useEffect(() => {
         const token = localStorage.getItem("authToken");
-        const tvToken = localStorage.getItem("tvAuthToken");
-        if (!token || !tvToken) {
+        if (!token) {
             router.push("/login");
             return;
         }
@@ -54,7 +53,7 @@ const Dev: React.FC = ({ setClicksCounter }) => {
                 }),
                 fetch(`${androidApi}scheduled_playlists`, {
                     headers: {
-                        Authorization: `Bearer ${tvToken}`,
+                        Authorization: `Bearer ${token}`,
                     },
                 }),
             ]);

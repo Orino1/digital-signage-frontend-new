@@ -146,30 +146,26 @@ const SetupNewDevice = () => {
         try {
             // const [latitude, longitude] = location.split(',').map(coord => coord.trim());
             const token = localStorage.getItem("authToken");
-            const tvToken = localStorage.getItem("tvAuthToken");
 
-            if (!token || !tvToken) {
+            if (!token) {
                 alert("You are not authenticated. Please login.");
                 router.push("/login");
                 return;
             }
-            let correctApi = "";
-            let correctToken = "";
+            let correctApi = null;
             // selecting correct api
             if (/^\d{9}$/.test(pin)) {
                 // for tv
                 correctApi = androidApi;
-                correctToken = tvToken;
             } else {
                 correctApi = raspApi;
-                correctToken = token;
             }
 
             const response = await fetch(`${correctApi}devices`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    Authorization: `Bearer ${correctToken}`,
+                    Authorization: `Bearer ${token}`,
                 },
                 body: JSON.stringify({
                     name,

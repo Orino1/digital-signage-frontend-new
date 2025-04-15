@@ -104,8 +104,7 @@ const Snapshot = () => {
     const fetchSetups = async () => {
         try {
             const token = localStorage.getItem('authToken');
-            const tvToken = localStorage.getItem('tvAuthToken');
-            if (!token || !tvToken) {
+            if (!token) {
                 console.error("No auth token found");
                 router.push('/login');
                 return;
@@ -113,19 +112,16 @@ const Snapshot = () => {
 
             // proxy if pi device otherwise android api directlly
             let correctApi = null
-            let correctToken = null
 
             if (deviceType === 'tv') {
                 correctApi = androidApi
-                correctToken = tvToken
             } else {
                 correctApi = `${API_BASE_URL}/`
-                correctToken = token
             }
 
             const response = await fetch(`${correctApi}scheduled_playlists`, {
                 headers: {
-                    'Authorization': `Bearer ${correctToken}`
+                    'Authorization': `Bearer ${token}`
                 }
             });
             if (response.ok) {
@@ -152,8 +148,8 @@ const Snapshot = () => {
     const fetchDevice = async () => {
         try {
             const token = localStorage.getItem('authToken');
-            const tvToken = localStorage.getItem('tvAuthToken');
-            if (!token || !tvToken) {
+
+            if (!token) {
                 handleUnauthorized();
                 return;
             }
@@ -164,14 +160,12 @@ const Snapshot = () => {
 
             if (deviceType === 'tv') {
                 correctApi = androidApi
-                correctToken = tvToken
             } else {
                 correctApi = `${API_BASE_URL}/`
-                correctToken = token
             }
             const response = await fetch(`${correctApi}devices/${deviceId}`, {
                 headers: {
-                    'Authorization': `Bearer ${correctToken}`
+                    'Authorization': `Bearer ${token}`
                 }
             });
 
@@ -204,27 +198,23 @@ const Snapshot = () => {
             setIsAssigning(true);
             setMessage("Capturing Snapshot...");
             const token = localStorage.getItem('authToken');
-            const tvToken = localStorage.getItem('tvAuthToken');
-            if (!token || !tvToken) {
+            if (!token) {
                 handleUnauthorized();
                 return;
             }
 
             // proxy if pi device otherwise android api directlly
             let correctApi = null
-            let correctToken = null
 
             if (deviceType === 'tv') {
                 correctApi = androidApi
-                correctToken = tvToken
             } else {
                 correctApi = `${API_BASE_URL}/`
-                correctToken = token
             }
             const response = await fetch(`${correctApi}devices/${deviceId}`, {
                 method: 'PUT',
                 headers: {
-                    'Authorization': `Bearer ${correctToken}`,
+                    'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({ scheduled_playlist_id: Number.parseInt(selectedSetup || "") }),
@@ -323,29 +313,25 @@ const Snapshot = () => {
         try {
 
             const token = localStorage.getItem('authToken');
-            const tvToken = localStorage.getItem('tvAuthToken');
-            if (!token || !tvToken) {
+            if (!token) {
                 router.push('/login');
                 return;
             }
 
             // proxy if pi device otherwise android api directlly
             let correctApi = null
-            let correctToken = null
 
             if (deviceType === 'tv') {
                 correctApi = androidApi
-                correctToken = tvToken
             } else {
                 correctApi = `${API_BASE_URL}/`
-                correctToken = token
             }
 
             
             const response = await fetch(`${correctApi}take_screenshot/${deviceId}`, {
                 method: 'GET',
                 headers: {
-                    'Authorization': `Bearer ${correctToken}`
+                    'Authorization': `Bearer ${token}`
                 }
             });
 

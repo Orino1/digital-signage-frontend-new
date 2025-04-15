@@ -282,24 +282,18 @@ const PlaylistForm: React.FC<PlaylistFormProps> = ({ onSave, initialSchedules, i
     const deleteSetup = async () => {
         if (!confirm("Are you sure you want to delete this entire setup?")) return;
         try {
-            // we need to see correct api that should hanlde this deletioon proccess
-            const tvToken = localStorage.getItem("tvAuthToken");
-
             let correctApi = null
-            let correctToken = null
             const setupId = initialSchedules.id
-            // if type is 
+
             if (setupType === 'tv') {
                 correctApi = `${androidApi}scheduled_playlists/${setupId}`
-                correctToken = tvToken
             } else {
                 correctApi = `/api/proxy/scheduled_playlists/${setupId}`
-                correctToken = authToken
             }
             const response = await fetch(correctApi, {
                 method: 'DELETE',
                 headers: {
-                    'Authorization': `Bearer ${correctToken}`,
+                    'Authorization': `Bearer ${authToken}`,
                 },
             });
             if (response.ok) {
