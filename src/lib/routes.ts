@@ -1,13 +1,13 @@
 import { S3Object } from "@/types"; // Assuming you have a types file
 
-const apiUrl = process.env.NEXT_PUBLIC_RP_API;
+const domain = process.env.NEXT_PUBLIC_MAIN_DOMAIN;
 
 export async function listS3Objects(
 	authToken: string,
 ): Promise<{ objects: S3Object[] }> {
 
 	const response = await fetch(
-		`${apiUrl}list-s3-objects`,
+		`${domain}list-s3-objects`,
 		{
 			method: "GET",
 			headers: {
@@ -27,7 +27,7 @@ export async function listS3Objects(
 }
 
 export function getS3ObjectUrl(key: string): string {
-	return `${apiUrl}list-s3-object/${encodeURIComponent(key)}`;
+	return `${domain}list-s3-object/${encodeURIComponent(key)}`;
 }
 
 // Add other API methods here as needed

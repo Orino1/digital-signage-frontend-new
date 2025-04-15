@@ -1,9 +1,9 @@
-const apiUrl = process.env.NEXT_PUBLIC_RP_API;
+const domain = process.env.NEXT_PUBLIC_MAIN_DOMAIN;
 
 export async function register(email: string, password: string) {
 	try {
 		const response = await fetch(
-			`${apiUrl}register`,
+			`${domain}register`,
 			{
 				method: "POST",
 				headers: {
@@ -29,7 +29,7 @@ export async function register(email: string, password: string) {
 
 export async function login(email: string, password: string) {
 	try {
-		const response = await fetch(`${apiUrl}login`, {
+		const response = await fetch(`${domain}login`, {
 			method: "POST",
 			headers: {
 				"Content-Type": "application/json",
