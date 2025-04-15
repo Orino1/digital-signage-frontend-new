@@ -86,23 +86,36 @@ const Configuration = () => {
                 return;
             }
 
-
-            const response = await fetch(
-                `${raspApi}scheduled_playlists/${setupId}`,
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
-                }
-            );
-            if (response.ok) {
-                const data = await response.json();
-                setPlaylist(data);
-                setDevices(data.devices || []);
-                setPlaylistName(data.playlist_name || "");
+            // we need to fetch both so we can merge devices list under them
+            const [raspRes, androidRes] = await Promise.all([
+                fetch(
+                    `${raspApi}scheduled_playlists/${setupId}`,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                        },
+                    }
+                ),
+                fetch(
+                    `${androidApi}scheduled_playlists/${setupId}`,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                        },
+                    }
+                )
+            ])
+            if (raspRes.ok && androidRes.ok) {
+                const [raspData, androidData] = await Promise.all([raspRes.json(), androidRes.json()]);
+                setPlaylist(raspData);
+                const raspDevices = raspData.devices || [];
+                const androidDevices = androidData.devices || [];
+                const mergedDevices = [...raspDevices, ...androidDevices];
+                setDevices(mergedDevices);
+                setPlaylistName(raspData.playlist_name || "");
             } else {
                 console.error("Failed to fetch setups");
-                if (response.status === 401) {
+                if (raspRes.status === 401 || androidRes.status === 401) {
                     router.push("/login");
                 }
             }

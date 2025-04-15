@@ -56,19 +56,42 @@ const Setups = () => {
                 return;
             }
 
-            const response = await fetch(`${raspApi}scheduled_playlists`, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            })
+            // we need to ftech both stups
+            const [raspRes, androidRes] = await Promise.all([
+                fetch(`${raspApi}scheduled_playlists`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }),
+                fetch(`${androidApi}scheduled_playlists`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }),
+            ]);
 
-            if (response.ok) {
-                const data = await response.json()
+            if (raspRes.ok && androidRes.ok) {
+                const [raspData, androidData] = await Promise.all([raspRes.json(), androidRes.json()]);
 
-                setPlaylists(data);
+                // mergin devices list
+                const mergedPlaylists = raspData.map((raspSetup: PlaylistData) => {
+                    const matchingAndroid = androidData.find(
+                        (androidSetup: PlaylistData) => androidSetup.id === raspSetup.id
+                    );
+            
+                    const raspDevices = raspSetup.devices || [];
+                    const androidDevices = matchingAndroid?.devices || [];
+            
+                    return {
+                        ...raspSetup,
+                        devices: [...raspDevices, ...androidDevices],
+                    };
+                });
+
+                setPlaylists(mergedPlaylists);
             } else {
                 console.error("Failed to fetch setups");
-                if (response.status === 401) {
+                if (raspRes.status === 401 || androidRes.status === 401) {
                     router.push("/login");
                 }
             }
@@ -207,13 +230,21 @@ const Setups = () => {
                                         >
                                             <TableCell
                                                 className="dark:text-white"
-                                                onClick={() => handlePlaylistClick(playlistObj.id)}
+                                                onClick={() =>
+                                                    handlePlaylistClick(
+                                                        playlistObj.id
+                                                    )
+                                                }
                                             >
                                                 {playlistObj.playlist_name}
                                             </TableCell>
                                             <TableCell
                                                 className="dark:text-white"
-                                                onClick={() => handlePlaylistClick(playlistObj.id)}
+                                                onClick={() =>
+                                                    handlePlaylistClick(
+                                                        playlistObj.id
+                                                    )
+                                                }
                                             >
                                                 {"start_time" in playlistData
                                                     ? 1
@@ -222,7 +253,11 @@ const Setups = () => {
                                             </TableCell>
                                             <TableCell
                                                 className="dark:text-white"
-                                                onClick={() => handlePlaylistClick(playlistObj.id)}
+                                                onClick={() =>
+                                                    handlePlaylistClick(
+                                                        playlistObj.id
+                                                    )
+                                                }
                                             >
                                                 {playlistObj.devices &&
                                                 playlistObj.devices.length
