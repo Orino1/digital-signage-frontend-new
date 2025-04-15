@@ -12,9 +12,15 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { PlusIcon, MoreHorizontalIcon } from "lucide-react";
-import { useRouter } from 'next/navigation';
+import { useRouter } from "next/navigation";
+import Dev from "@/components/Dev";
 
-const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faRaspberryPi } from "@fortawesome/free-brands-svg-icons";
+import { faTv } from "@fortawesome/free-solid-svg-icons";
+
+const raspApi = process.env.NEXT_PUBLIC_RP_API;
+const androidApi = process.env.NEXT_PUBLIC_TV_API;
 
 interface Playlist {
     end_time: string;
@@ -39,7 +45,9 @@ const Setups = () => {
     const router = useRouter();
     const [playlists, setPlaylists] = useState<PlaylistData[]>([]);
     const [showMenu, setShowMenu] = useState<number | null>(null); // Store the ID of the playlist where the menu is shown
-    const [selectedPlaylist, setSelectedPlaylist] = useState<PlaylistData | null>(null);
+    const [selectedPlaylist, setSelectedPlaylist] =
+        useState<PlaylistData | null>(null);
+    const [clicksCounter, setClicksCounter] = useState<number>(0); // Tracking clicks on dev pannel btn
 
     useEffect(() => {
         fetchSetups();
@@ -47,26 +55,45 @@ const Setups = () => {
 
     const fetchSetups = async () => {
         try {
-            const token = localStorage.getItem('authToken');
-            if (!token) {
+            const token = localStorage.getItem("authToken");
+            const tvToken = localStorage.getItem("tvAuthToken");
+            if (!token || !tvToken) {
                 console.error("No auth token found");
-                router.push('/login');
+                router.push("/login");
                 return;
             }
 
-            const response = await fetch(`${apiUrl}scheduled_playlists`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            });
-            if (response.ok) {
-                const data = await response.json();
-                console.log(data)
-                setPlaylists(data);
+            const [raspRes, androidRes] = await Promise.all([
+                fetch(`${raspApi}scheduled_playlists`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }),
+                fetch(`${androidApi}scheduled_playlists`, {
+                    headers: {
+                        Authorization: `Bearer ${tvToken}`,
+                    },
+                }),
+            ]);
+
+            if (raspRes.ok && androidRes.ok) {
+                const [raspData, androidData] = await Promise.all([
+                    raspRes.json(),
+                    androidRes.json(),
+                ]);
+
+                const markedAndroidData = androidData.map((item) => ({
+                    ...item,
+                    tv: true,
+                }));
+
+                console.log(raspData);
+                console.log(markedAndroidData);
+                setPlaylists([...raspData, ...markedAndroidData]);
             } else {
                 console.error("Failed to fetch setups");
-                if (response.status === 401) {
-                    router.push('/login');
+                if (raspRes.status === 401 || androidRes.status === 401) {
+                    router.push("/login");
                 }
             }
         } catch (error) {
@@ -75,11 +102,11 @@ const Setups = () => {
     };
 
     const handleAddSetup = () => {
-        router.push('/dashboard/configuration/new');
+        router.push("/dashboard/configuration/new");
     };
 
-    const handlePlaylistClick = (setupId: number) => {
-        router.push(`/dashboard/configuration/${setupId}`);
+    const handlePlaylistClick = (setupId: number, type: "tv" | "pi") => {
+        router.push(`/dashboard/configuration/${setupId}?type=${type}`);
     };
 
     const handleMenuClick = (playlist: PlaylistData) => {
@@ -103,10 +130,11 @@ const Setups = () => {
 
     const handleSavePlaylist = async (updatedPlaylist: PlaylistData) => {
         try {
-            const token = localStorage.getItem('authToken');
-            if (!token) {
+            const token = localStorage.getItem("authToken");
+            const tvToken = localStorage.getItem("tvAuthToken");
+            if (!token || !tvToken) {
                 console.error("No auth token found");
-                router.push('/login');
+                router.push("/login");
                 return;
             }
 
@@ -117,16 +145,27 @@ const Setups = () => {
                 id: updatedPlaylist.id,
             };
 
-            const response = await fetch('/api/proxy/scheduled_playlists', {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(adjustedData),
-            });
+            // one proxied and is not
+            const [raspRes, androidRes] = await Promise.all([
+                fetch("/api/proxy/scheduled_playlists", {
+                    method: "POST",
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(adjustedData),
+                }),
+                fetch(`${androidApi}scheduled_playlists`, {
+                    method: "POST",
+                    headers: {
+                        Authorization: `Bearer ${tvToken}`,
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(adjustedData),
+                }),
+            ]);
 
-            if (response.ok) {
+            if (raspRes.ok && androidRes.ok) {
                 console.log("Playlist copied successfully");
                 fetchSetups(); // Refresh the playlist list after copying
             } else {
@@ -137,10 +176,18 @@ const Setups = () => {
         }
     };
 
+    const handleHiddenBtnClick = async () => {
+        setClicksCounter((prev) => prev + 1);
+        console.log(clicksCounter);
+    };
     return (
         <div className="min-h-screen text-white p-6">
             <div className="max-w-6xl mx-auto">
                 <div className="flex justify-end space-x-4 my-16">
+                    <button
+                        onClick={handleHiddenBtnClick}
+                        style={{ width: "50px", cursor: "default" }}
+                    ></button>
                     <Button
                         variant="default"
                         className="bg-green-500 hover:bg-green-600 text-black font-bold"
@@ -153,63 +200,158 @@ const Setups = () => {
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead className="dark:text-black bg-gray-300">Name</TableHead>
-                            <TableHead className="dark:text-black bg-gray-300">Schedules</TableHead>
-                            <TableHead className="dark:text-black bg-gray-300">Paired Devices</TableHead>
-                            <TableHead className="dark:text-black bg-gray-300">Actions</TableHead>
+                            <TableHead className="dark:text-black bg-gray-300">
+                                Name
+                            </TableHead>
+                            <TableHead className="dark:text-black bg-gray-300">
+                                Schedules
+                            </TableHead>
+                            <TableHead className="dark:text-black bg-gray-300">
+                                Paired Devices
+                            </TableHead>
+                            <TableHead className="dark:text-black bg-gray-300">
+                                Actions
+                            </TableHead>
+                            <TableHead className="dark:text-black bg-gray-300">
+                                Setup Type
+                            </TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-    {playlists.length > 0 ? (
-        playlists
-            .slice() // Create a shallow copy to avoid mutating state directly
-            .sort((a, b) =>
-                a.playlist_name.localeCompare(b.playlist_name, 'en', { sensitivity: 'base' })
-            )
-            .map(playlistObj => {
-                const playlistName = Object.keys(playlistObj.data)[0];
-                const playlistData = playlistObj.data[playlistName];
+                        {playlists.length > 0 ? (
+                            playlists
+                                .slice() // Create a shallow copy to avoid mutating state directly
+                                .sort((a, b) =>
+                                    a.playlist_name.localeCompare(
+                                        b.playlist_name,
+                                        "en",
+                                        { sensitivity: "base" }
+                                    )
+                                )
+                                .map((playlistObj) => {
+                                    const playlistName = Object.keys(
+                                        playlistObj.data
+                                    )[0];
+                                    const playlistData =
+                                        playlistObj.data[playlistName];
 
-                return (
-                    <TableRow key={playlistObj.id} className="cursor-pointer text-black">
-                        <TableCell className="dark:text-white" onClick={() => handlePlaylistClick(playlistObj.id)}>
-                            {playlistObj.playlist_name}
-                        </TableCell>
-                        <TableCell className="dark:text-white" onClick={() => handlePlaylistClick(playlistObj.id)}>
-                            {'start_time' in playlistData ? 1 : Object.keys(playlistData).length}
-                        </TableCell>
-                        <TableCell className="dark:text-white" onClick={() => handlePlaylistClick(playlistObj.id)}>
-                            {playlistObj.devices && playlistObj.devices.length ? playlistObj.devices.length : "-"}
-                        </TableCell>
-                        <TableCell className="relative">
-                            <MoreHorizontalIcon
-                                className="h-5 w-5 cursor-pointer"
-                                onClick={() => handleMenuClick(playlistObj)}
-                            />
-                            {showMenu === playlistObj.id && (
-                                <div className="absolute right-0 mt-2 w-48 bg-white shadow-lg rounded-md z-50">
-                                    <ul>
-                                        <li
-                                            className="px-4 py-2 hover:bg-gray-200 cursor-pointer"
-                                            onClick={handleCopySetup}
+                                    console.log(playlistData);
+                                    return (
+                                        <TableRow
+                                            key={playlistObj.id}
+                                            className="cursor-pointer text-black"
                                         >
-                                            Copy Setup
-                                        </li>
-                                    </ul>
-                                </div>
-                            )}
-                        </TableCell>
-                    </TableRow>
-                );
-            })
-                      ) : (
-                          <TableRow>
-                              <TableCell colSpan={4} className="text-center">No Playlists Available</TableCell>
-                          </TableRow>
-                      )}
-                  </TableBody>
+                                            <TableCell
+                                                className="dark:text-white"
+                                                onClick={() => {
+                                                    const type = playlistObj.tv
+                                                        ? "tv"
+                                                        : "pi";
+                                                    handlePlaylistClick(
+                                                        playlistObj.id,
+                                                        type
+                                                    );
+                                                }}
+                                            >
+                                                {playlistObj.playlist_name}
+                                            </TableCell>
+                                            <TableCell
+                                                className="dark:text-white"
+                                                onClick={() => {
+                                                    const type = playlistObj.tv
+                                                        ? "tv"
+                                                        : "pi";
+                                                    handlePlaylistClick(
+                                                        playlistObj.id,
+                                                        type
+                                                    );
+                                                }}
+                                            >
+                                                {"start_time" in playlistData
+                                                    ? 1
+                                                    : Object.keys(playlistData)
+                                                          .length}
+                                            </TableCell>
+                                            <TableCell
+                                                className="dark:text-white"
+                                                onClick={() => {
+                                                    const type = playlistObj.tv
+                                                        ? "tv"
+                                                        : "pi";
+                                                    handlePlaylistClick(
+                                                        playlistObj.id,
+                                                        type
+                                                    );
+                                                }}
+                                            >
+                                                {playlistObj.devices &&
+                                                playlistObj.devices.length
+                                                    ? playlistObj.devices.length
+                                                    : "-"}
+                                            </TableCell>
+                                            <TableCell className="relative">
+                                                <MoreHorizontalIcon
+                                                    className="h-5 w-5 cursor-pointer"
+                                                    onClick={() =>
+                                                        handleMenuClick(
+                                                            playlistObj
+                                                        )
+                                                    }
+                                                />
+                                                {showMenu ===
+                                                    playlistObj.id && (
+                                                    <div className="absolute right-0 mt-2 w-48 bg-white shadow-lg rounded-md z-50">
+                                                        <ul>
+                                                            <li
+                                                                className="px-4 py-2 hover:bg-gray-200 cursor-pointer"
+                                                                onClick={
+                                                                    handleCopySetup
+                                                                }
+                                                            >
+                                                                Copy Setup
+                                                            </li>
+                                                        </ul>
+                                                    </div>
+                                                )}
+                                            </TableCell>
+                                            <TableCell
+                                                onClick={() => {
+                                                    const type = playlistObj.tv
+                                                        ? "tv"
+                                                        : "pi";
+                                                    handlePlaylistClick(
+                                                        playlistObj.id,
+                                                        type
+                                                    );
+                                                }}
+                                                className="dark:text-white"
+                                            >
+                                                {playlistObj.tv ? (
+                                                    <FontAwesomeIcon
+                                                        icon={faTv}
+                                                        size="2x"
+                                                    />
+                                                ) : (
+                                                    <FontAwesomeIcon
+                                                        icon={faRaspberryPi}
+                                                        size="2x"
+                                                    />
+                                                )}
+                                            </TableCell>
+                                        </TableRow>
+                                    );
+                                })
+                        ) : (
+                            <TableRow>
+                                <TableCell colSpan={4} className="text-center">
+                                    No Playlists Available
+                                </TableCell>
+                            </TableRow>
+                        )}
+                    </TableBody>
                 </Table>
             </div>
+            {clicksCounter == 8 && <Dev setClicksCounter={setClicksCounter} />}
         </div>
     );
 };

@@ -12,8 +12,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Modal from "@/components/Modal";
 import { useAuth } from "@/hooks/useAuth";
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { v4 as uuidv4 } from 'uuid';
+
+const raspApi = process.env.NEXT_PUBLIC_RP_API;
+const androidApi = process.env.NEXT_PUBLIC_TV_API;
 
 interface Playlist {
     start_time: string;
@@ -138,6 +141,9 @@ const PlaylistForm: React.FC<PlaylistFormProps> = ({ onSave, initialSchedules, i
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [activeTab, setActiveTab] = useState<'images' | 'videos'>('images');
     const inputRefs = useRef<Record<string, HTMLInputElement | null>>({});
+
+    const searchParams = useSearchParams();
+    const setupType = searchParams.get("type");
 
     useEffect(() => {
         if (isEditing && initialSchedules.id) {
@@ -276,10 +282,24 @@ const PlaylistForm: React.FC<PlaylistFormProps> = ({ onSave, initialSchedules, i
     const deleteSetup = async () => {
         if (!confirm("Are you sure you want to delete this entire setup?")) return;
         try {
-            const response = await fetch(`/api/proxy/scheduled_playlists/${initialSchedules.id}`, {
+            // we need to see correct api that should hanlde this deletioon proccess
+            const tvToken = localStorage.getItem("tvAuthToken");
+
+            let correctApi = null
+            let correctToken = null
+            const setupId = initialSchedules.id
+            // if type is 
+            if (setupType === 'tv') {
+                correctApi = `${androidApi}scheduled_playlists/${setupId}`
+                correctToken = tvToken
+            } else {
+                correctApi = `/api/proxy/scheduled_playlists/${setupId}`
+                correctToken = authToken
+            }
+            const response = await fetch(correctApi, {
                 method: 'DELETE',
                 headers: {
-                    'Authorization': `Bearer ${authToken}`,
+                    'Authorization': `Bearer ${correctToken}`,
                 },
             });
             if (response.ok) {

@@ -14,7 +14,8 @@ import {
     IScannerComponents,
 } from "@yudiel/react-qr-scanner";
 
-const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+const raspApi = process.env.NEXT_PUBLIC_RP_API;
+const androidApi = process.env.NEXT_PUBLIC_TV_API;
 
 declare global {
     interface Window {
@@ -32,21 +33,20 @@ const SetupNewDevice = () => {
     const router = useRouter();
     //const searchParams = useSearchParams();
 
-
     const [isScanning, setIsScanning] = useState(false);
 
-	useEffect(() => {
-		const handleAuth = async () => {
-			const token = localStorage.getItem('authToken');
-			if (!token) {
-				console.error("No auth token found");
-				router.push('/login');
-				return;
-			}
-		}
+    useEffect(() => {
+        const handleAuth = async () => {
+            const token = localStorage.getItem("authToken");
+            if (!token) {
+                console.error("No auth token found");
+                router.push("/login");
+                return;
+            }
+        };
 
-		handleAuth()
-	})
+        handleAuth();
+    });
 
     const PinHandler = () => {
         const searchParams = useSearchParams();
@@ -62,7 +62,7 @@ const SetupNewDevice = () => {
     const handleScan = (result: any) => {
         const url = result[0].rawValue;
         // extract query param
-        const pin = url.split("=")[1]
+        const pin = url.split("=")[1];
         setPin(pin);
         setIsScanning(false);
     };
@@ -146,18 +146,30 @@ const SetupNewDevice = () => {
         try {
             // const [latitude, longitude] = location.split(',').map(coord => coord.trim());
             const token = localStorage.getItem("authToken");
+            const tvToken = localStorage.getItem("tvAuthToken");
 
-            if (!token) {
+            if (!token || !tvToken) {
                 alert("You are not authenticated. Please login.");
                 router.push("/login");
                 return;
             }
+            let correctApi = "";
+            let correctToken = "";
+            // selecting correct api
+            if (/^\d{9}$/.test(pin)) {
+                // for tv
+                correctApi = androidApi;
+                correctToken = tvToken;
+            } else {
+                correctApi = raspApi;
+                correctToken = token;
+            }
 
-            const response = await fetch(`${apiUrl}devices`, {
+            const response = await fetch(`${correctApi}devices`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`,
+                    Authorization: `Bearer ${correctToken}`,
                 },
                 body: JSON.stringify({
                     name,
