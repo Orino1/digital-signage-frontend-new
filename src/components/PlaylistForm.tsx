@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Modal from "@/components/Modal";
 import { useAuth } from "@/hooks/useAuth";
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { v4 as uuidv4 } from 'uuid';
 
 const raspApi = process.env.NEXT_PUBLIC_RP_API;
@@ -142,8 +142,6 @@ const PlaylistForm: React.FC<PlaylistFormProps> = ({ onSave, initialSchedules, i
     const [activeTab, setActiveTab] = useState<'images' | 'videos'>('images');
     const inputRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
-    const searchParams = useSearchParams();
-    const setupType = searchParams.get("type");
 
     useEffect(() => {
         if (isEditing && initialSchedules.id) {
@@ -282,21 +280,23 @@ const PlaylistForm: React.FC<PlaylistFormProps> = ({ onSave, initialSchedules, i
     const deleteSetup = async () => {
         if (!confirm("Are you sure you want to delete this entire setup?")) return;
         try {
-            let correctApi = null
             const setupId = initialSchedules.id
 
-            if (setupType === 'tv') {
-                correctApi = `${androidApi}scheduled_playlists/${setupId}`
-            } else {
-                correctApi = `/api/proxy/scheduled_playlists/${setupId}`
-            }
-            const response = await fetch(correctApi, {
-                method: 'DELETE',
-                headers: {
-                    'Authorization': `Bearer ${authToken}`,
-                },
-            });
-            if (response.ok) {
+            const [raspRes, androidRes] = await Promise.all([
+                fetch(`${androidApi}scheduled_playlists/${setupId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                    },
+                }),
+                fetch(`/api/proxy/scheduled_playlists/${setupId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                    },
+                })
+            ])
+            if (raspRes.ok && androidRes.ok) {
                 router.push('/dashboard/setups');
             } else {
                 setError("Failed to delete setup");

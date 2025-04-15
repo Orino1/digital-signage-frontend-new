@@ -13,11 +13,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { PlusIcon, MoreHorizontalIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import Dev from "@/components/Dev";
-
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faRaspberryPi } from "@fortawesome/free-brands-svg-icons";
-import { faTv } from "@fortawesome/free-solid-svg-icons";
 
 const raspApi = process.env.NEXT_PUBLIC_RP_API;
 const androidApi = process.env.NEXT_PUBLIC_TV_API;
@@ -47,7 +42,6 @@ const Setups = () => {
     const [showMenu, setShowMenu] = useState<number | null>(null); // Store the ID of the playlist where the menu is shown
     const [selectedPlaylist, setSelectedPlaylist] =
         useState<PlaylistData | null>(null);
-    const [clicksCounter, setClicksCounter] = useState<number>(0); // Tracking clicks on dev pannel btn
 
     useEffect(() => {
         fetchSetups();
@@ -62,36 +56,19 @@ const Setups = () => {
                 return;
             }
 
-            const [raspRes, androidRes] = await Promise.all([
-                fetch(`${raspApi}scheduled_playlists`, {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
-                }),
-                fetch(`${androidApi}scheduled_playlists`, {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
-                }),
-            ]);
+            const response = await fetch(`${androidApi}scheduled_playlists`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            })
 
-            if (raspRes.ok && androidRes.ok) {
-                const [raspData, androidData] = await Promise.all([
-                    raspRes.json(),
-                    androidRes.json(),
-                ]);
+            if (response.ok) {
+                const data = await response.json()
 
-                const markedAndroidData = androidData.map((item) => ({
-                    ...item,
-                    tv: true,
-                }));
-
-                console.log(raspData);
-                console.log(markedAndroidData);
-                setPlaylists([...raspData, ...markedAndroidData]);
+                setPlaylists(data);
             } else {
                 console.error("Failed to fetch setups");
-                if (raspRes.status === 401 || androidRes.status === 401) {
+                if (response.status === 401) {
                     router.push("/login");
                 }
             }
@@ -104,8 +81,8 @@ const Setups = () => {
         router.push("/dashboard/configuration/new");
     };
 
-    const handlePlaylistClick = (setupId: number, type: "tv" | "pi") => {
-        router.push(`/dashboard/configuration/${setupId}?type=${type}`);
+    const handlePlaylistClick = (setupId: number) => {
+        router.push(`/dashboard/configuration/${setupId}`);
     };
 
     const handleMenuClick = (playlist: PlaylistData) => {
@@ -174,18 +151,10 @@ const Setups = () => {
         }
     };
 
-    const handleHiddenBtnClick = async () => {
-        setClicksCounter((prev) => prev + 1);
-        console.log(clicksCounter);
-    };
     return (
         <div className="min-h-screen text-white p-6">
             <div className="max-w-6xl mx-auto">
                 <div className="flex justify-end space-x-4 my-16">
-                    <button
-                        onClick={handleHiddenBtnClick}
-                        style={{ width: "50px", cursor: "default" }}
-                    ></button>
                     <Button
                         variant="default"
                         className="bg-green-500 hover:bg-green-600 text-black font-bold"
@@ -209,9 +178,6 @@ const Setups = () => {
                             </TableHead>
                             <TableHead className="dark:text-black bg-gray-300">
                                 Actions
-                            </TableHead>
-                            <TableHead className="dark:text-black bg-gray-300">
-                                Setup Type
                             </TableHead>
                         </TableRow>
                     </TableHeader>
@@ -241,29 +207,13 @@ const Setups = () => {
                                         >
                                             <TableCell
                                                 className="dark:text-white"
-                                                onClick={() => {
-                                                    const type = playlistObj.tv
-                                                        ? "tv"
-                                                        : "pi";
-                                                    handlePlaylistClick(
-                                                        playlistObj.id,
-                                                        type
-                                                    );
-                                                }}
+                                                onClick={() => handlePlaylistClick(playlistObj.id)}
                                             >
                                                 {playlistObj.playlist_name}
                                             </TableCell>
                                             <TableCell
                                                 className="dark:text-white"
-                                                onClick={() => {
-                                                    const type = playlistObj.tv
-                                                        ? "tv"
-                                                        : "pi";
-                                                    handlePlaylistClick(
-                                                        playlistObj.id,
-                                                        type
-                                                    );
-                                                }}
+                                                onClick={() => handlePlaylistClick(playlistObj.id)}
                                             >
                                                 {"start_time" in playlistData
                                                     ? 1
@@ -272,15 +222,7 @@ const Setups = () => {
                                             </TableCell>
                                             <TableCell
                                                 className="dark:text-white"
-                                                onClick={() => {
-                                                    const type = playlistObj.tv
-                                                        ? "tv"
-                                                        : "pi";
-                                                    handlePlaylistClick(
-                                                        playlistObj.id,
-                                                        type
-                                                    );
-                                                }}
+                                                onClick={() => handlePlaylistClick(playlistObj.id)}
                                             >
                                                 {playlistObj.devices &&
                                                 playlistObj.devices.length
@@ -312,30 +254,6 @@ const Setups = () => {
                                                     </div>
                                                 )}
                                             </TableCell>
-                                            <TableCell
-                                                onClick={() => {
-                                                    const type = playlistObj.tv
-                                                        ? "tv"
-                                                        : "pi";
-                                                    handlePlaylistClick(
-                                                        playlistObj.id,
-                                                        type
-                                                    );
-                                                }}
-                                                className="dark:text-white"
-                                            >
-                                                {playlistObj.tv ? (
-                                                    <FontAwesomeIcon
-                                                        icon={faTv}
-                                                        size="2x"
-                                                    />
-                                                ) : (
-                                                    <FontAwesomeIcon
-                                                        icon={faRaspberryPi}
-                                                        size="2x"
-                                                    />
-                                                )}
-                                            </TableCell>
                                         </TableRow>
                                     );
                                 })
@@ -349,7 +267,6 @@ const Setups = () => {
                     </TableBody>
                 </Table>
             </div>
-            {clicksCounter == 8 && <Dev setClicksCounter={setClicksCounter} />}
         </div>
     );
 };

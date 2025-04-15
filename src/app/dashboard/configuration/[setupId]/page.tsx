@@ -9,7 +9,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -76,8 +76,6 @@ const Configuration = () => {
     const [isSaving, setIsSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [playlistName, setPlaylistName] = useState<string>("");
-    const searchParams = useSearchParams();
-    const type = searchParams.get("type");
 
     const fetchSetup = useCallback(async () => {
         try {
@@ -89,15 +87,9 @@ const Configuration = () => {
             }
 
             const newSetup = setupId === "new" ? true : false;
-            let correctApi = null;
-            if (!newSetup) {
-                correctApi = type === "tv" ? androidApi : raspApi;
-            } else {
-                correctApi = raspApi;
-            }
 
             const response = await fetch(
-                `${correctApi}scheduled_playlists/${setupId}`,
+                `${androidApi}scheduled_playlists/${setupId}`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`,
@@ -144,12 +136,6 @@ const Configuration = () => {
             };
 
             const newSetup = setupId === "new" ? true : false;
-            let correctApi = null;
-            if (!newSetup) {
-                correctApi = type === "tv" ? androidApi : raspApi;
-            } else {
-                correctApi = raspApi;
-            }
 
             const method = setupId === "new" ? "POST" : "PUT";
 
@@ -183,24 +169,35 @@ const Configuration = () => {
                     setError("Failed to save playlists");
                 }
             } else {
-                // update setup
-                const correctApi = type === "tv" ? androidApi : raspApi;
+                // update both of them
 
-                // make fethc call with correct with put method
-                const response = await fetch(
-                    `${correctApi}scheduled_playlists/${setupId}`,
-                    {
-                        method: method,
-                        headers: {
-                            Authorization: `Bearer ${token}`,
-                            "Content-Type": "application/json",
-                        },
-                        body: JSON.stringify(adjustedData),
-                    }
-                );
+                const [raspRes, androidRes] = await Promise.all([
+                    fetch(
+                        `${raspApi}scheduled_playlists/${setupId}`,
+                        {
+                            method: method,
+                            headers: {
+                                Authorization: `Bearer ${token}`,
+                                "Content-Type": "application/json",
+                            },
+                            body: JSON.stringify(adjustedData),
+                        }
+                    ),
+                    fetch(
+                        `${androidApi}scheduled_playlists/${setupId}`,
+                        {
+                            method: method,
+                            headers: {
+                                Authorization: `Bearer ${token}`,
+                                "Content-Type": "application/json",
+                            },
+                            body: JSON.stringify(adjustedData),
+                        }
+                    )
+                ])
 
 				// check response and be done
-                if (response.ok) {
+                if (raspRes.ok && androidRes.ok) {
                     console.log("Playlists saved successfully");
                     router.push("/dashboard/setups");
                 } else {
