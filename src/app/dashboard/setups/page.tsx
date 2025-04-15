@@ -56,7 +56,7 @@ const Setups = () => {
                 return;
             }
 
-            const response = await fetch(`${androidApi}scheduled_playlists`, {
+            const response = await fetch(`${raspApi}scheduled_playlists`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
