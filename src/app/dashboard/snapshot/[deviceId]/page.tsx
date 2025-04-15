@@ -362,7 +362,15 @@ const Snapshot = () => {
                 return;
             }
 
-            const response = await fetch(`${API_BASE_URL}/devices/${deviceId}`, {
+
+            let correctApi = null
+
+            if (deviceType === 'tv') {
+                correctApi = androidApi
+            } else {
+                correctApi = `${API_BASE_URL}/`
+            }
+            const response = await fetch(`${correctApi}devices/${deviceId}`, {
                 method: 'DELETE',
                 headers: {
                     'Authorization': `Bearer ${token}`,
