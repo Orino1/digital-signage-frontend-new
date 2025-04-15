@@ -86,10 +86,9 @@ const Configuration = () => {
                 return;
             }
 
-            const newSetup = setupId === "new" ? true : false;
 
             const response = await fetch(
-                `${androidApi}scheduled_playlists/${setupId}`,
+                `${raspApi}scheduled_playlists/${setupId}`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`,
