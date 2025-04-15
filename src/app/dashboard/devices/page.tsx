@@ -77,7 +77,10 @@ const DevicesPage = () => {
                     await raspRes.json(),
                     await androidRes.json(),
                 ]);
-                setDevices([...androidData, ...raspData]);
+                // add tv attrbute to each one of those android tv devices
+                const androidDevicesWithTvTag = androidData.map(device => ({ ...device, tv: true }));
+
+                setDevices([...androidDevicesWithTvTag, ...raspData]);
             } else {
                 console.error("Failed to fetch devices");
                 if (raspRes.status === 401 || androidRes.status === 401) {
