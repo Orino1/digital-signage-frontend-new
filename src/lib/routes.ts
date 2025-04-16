@@ -1,6 +1,6 @@
 import { S3Object } from "@/types"; // Assuming you have a types file
 
-const domain = process.env.NEXT_PUBLIC_MAIN_DOMAIN;
+const domain = process.env.NEXT_PUBLIC_RP_API;
 
 export async function listS3Objects(
 	authToken: string,

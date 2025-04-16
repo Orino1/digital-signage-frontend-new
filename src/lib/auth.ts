@@ -1,4 +1,4 @@
-const domain = process.env.NEXT_PUBLIC_MAIN_DOMAIN;
+const domain = process.env.NEXT_PUBLIC_RP_API;
 
 export async function register(email: string, password: string) {
 	try {

@@ -21,7 +21,7 @@ export async function DELETE(request: NextRequest) {
 
 async function handleProxy(request: NextRequest) {
 	const url = new URL(request.url);
-	// todo is to make sure that we are requesting stuff from our backend and not from the actual videobackend
+
 	const cleanedApiUrl = apiUrl.slice(0, -1);
 	const targetUrl = `${cleanedApiUrl}${url.pathname.replace("/api/proxy", "")}`;
 
