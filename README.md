@@ -1,24 +1,14 @@
-Project setup guide.
-
-1. Clone the repo
-
-2. Install the packages
-
- ```bash
-    pnpm install
-```
-
-3. Once the packages are installed, you can run the following command to generate the database:
-
-Run below command
-
+## Install dependencies
 ```bash
-    pnpm db:generate
+npm install
 ```
+## Prepare .env.local
+```
+mv .env.local.example .env.local
 
-4. And then run the below command to start the server
-
+vi .env.local # change variables to prod
+```
+## Build
 ```bash
-    pnpm dev
+npm run build
 ```
-
