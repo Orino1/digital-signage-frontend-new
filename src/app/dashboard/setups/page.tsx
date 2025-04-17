@@ -71,22 +71,28 @@ const Setups = () => {
             ]);
 
             if (raspRes.ok && androidRes.ok) {
-                const [raspData, androidData] = await Promise.all([raspRes.json(), androidRes.json()]);
+                const [raspData, androidData] = await Promise.all([
+                    raspRes.json(),
+                    androidRes.json(),
+                ]);
 
                 // mergin devices list
-                const mergedPlaylists = raspData.map((raspSetup: PlaylistData) => {
-                    const matchingAndroid = androidData.find(
-                        (androidSetup: PlaylistData) => androidSetup.id === raspSetup.id
-                    );
-            
-                    const raspDevices = raspSetup.devices || [];
-                    const androidDevices = matchingAndroid?.devices || [];
-            
-                    return {
-                        ...raspSetup,
-                        devices: [...raspDevices, ...androidDevices],
-                    };
-                });
+                const mergedPlaylists = raspData.map(
+                    (raspSetup: PlaylistData) => {
+                        const matchingAndroid = androidData.find(
+                            (androidSetup: PlaylistData) =>
+                                androidSetup.id === raspSetup.id
+                        );
+
+                        const raspDevices = raspSetup.devices || [];
+                        const androidDevices = matchingAndroid?.devices || [];
+
+                        return {
+                            ...raspSetup,
+                            devices: [...raspDevices, ...androidDevices],
+                        };
+                    }
+                );
 
                 setPlaylists(mergedPlaylists);
             } else {
@@ -246,10 +252,15 @@ const Setups = () => {
                                                     )
                                                 }
                                             >
-                                                {"start_time" in playlistData
-                                                    ? 1
-                                                    : Object.keys(playlistData)
-                                                          .length}
+                                                {playlistData
+                                                    ? "start_time" in
+                                                      playlistData
+                                                        ? 1
+                                                        : Object.keys(
+                                                              playlistData
+                                                          ).length
+                                                    : 0
+                                                }
                                             </TableCell>
                                             <TableCell
                                                 className="dark:text-white"

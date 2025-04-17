@@ -1,9 +1,15 @@
 "use client";
 
-import { Cog, RotateCcw, Trash2 } from 'lucide-react';
+import { Cog, RotateCcw, Trash2 } from "lucide-react";
 import React, { useEffect, useState } from "react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
@@ -30,7 +36,7 @@ interface Device {
     scheduled_playlist_id?: number;
 }
 
-const API_BASE_URL = '/api/proxy';
+const API_BASE_URL = "/api/proxy";
 const raspApi = process.env.NEXT_PUBLIC_RP_API;
 const androidApi = process.env.NEXT_PUBLIC_TV_API;
 
@@ -59,12 +65,12 @@ const Snapshot = () => {
         };
 
         handleResize(); // Check on initial load
-        window.addEventListener('resize', handleResize);
+        window.addEventListener("resize", handleResize);
 
         return () => {
-            window.removeEventListener('resize', handleResize);
+            window.removeEventListener("resize", handleResize);
         };
-    }, [])
+    }, []);
 
     useEffect(() => {
         if (deviceId) {
@@ -77,9 +83,9 @@ const Snapshot = () => {
     }, [deviceId]);
 
     const parseDate = (dateString: string): Date => {
-        const [datePart, timePart] = dateString.split(' ');
-        const [year, month, day] = datePart.split('-').map(Number);
-        const [hour, minute] = timePart.split(':').map(Number);
+        const [datePart, timePart] = dateString.split(" ");
+        const [year, month, day] = datePart.split("-").map(Number);
+        const [hour, minute] = timePart.split(":").map(Number);
         return new Date(Date.UTC(year, month - 1, day, hour, minute));
     };
 
@@ -87,42 +93,43 @@ const Snapshot = () => {
         if (device && device.last_seen) {
             const lastSeenDate = parseDate(device.last_seen);
             const now = new Date();
-            console.log(Math.abs(now.getTime() - lastSeenDate.getTime()))
-            console.log(now.getTime())
-            console.log(lastSeenDate.getTime())
-            if (Math.abs(now.getTime() - lastSeenDate.getTime()) < 60000) { // Within 1 minute
+            console.log(Math.abs(now.getTime() - lastSeenDate.getTime()));
+            console.log(now.getTime());
+            console.log(lastSeenDate.getTime());
+            if (Math.abs(now.getTime() - lastSeenDate.getTime()) < 60000) {
+                // Within 1 minute
                 captureSnapshot();
             }
         }
     }, [device]);
 
     const handleUnauthorized = () => {
-        localStorage.removeItem('authToken');
-        router.push('/login');
+        localStorage.removeItem("authToken");
+        router.push("/login");
     };
 
     const fetchSetups = async () => {
         try {
-            const token = localStorage.getItem('authToken');
+            const token = localStorage.getItem("authToken");
             if (!token) {
                 console.error("No auth token found");
-                router.push('/login');
+                router.push("/login");
                 return;
             }
 
             // proxy if pi device otherwise android api directlly
-            let correctApi = null
+            let correctApi = null;
 
-            if (deviceType === 'tv') {
-                correctApi = androidApi
+            if (deviceType === "tv") {
+                correctApi = androidApi;
             } else {
-                correctApi = `${API_BASE_URL}/`
+                correctApi = `${API_BASE_URL}/`;
             }
 
             const response = await fetch(`${correctApi}scheduled_playlists`, {
                 headers: {
-                    'Authorization': `Bearer ${token}`
-                }
+                    Authorization: `Bearer ${token}`,
+                },
             });
             if (response.ok) {
                 const data: PlaylistData[] = await response.json();
@@ -132,12 +139,12 @@ const Snapshot = () => {
                     const playlistName = Object.keys(item.data)[0]; // Get the first key from the data object
                     result[item.id] = item.playlist_name; // Map id to playlist name
                 }
-                setPlaylistObjects(data)
+                setPlaylistObjects(data);
                 setPlaylists(result);
             } else {
                 console.error("Failed to fetch setups");
                 if (response.status === 401) {
-                    router.push('/login');
+                    router.push("/login");
                 }
             }
         } catch (error) {
@@ -147,7 +154,7 @@ const Snapshot = () => {
 
     const fetchDevice = async () => {
         try {
-            const token = localStorage.getItem('authToken');
+            const token = localStorage.getItem("authToken");
 
             if (!token) {
                 handleUnauthorized();
@@ -155,30 +162,34 @@ const Snapshot = () => {
             }
 
             // proxy if pi device otherwise android api directlly
-            let correctApi = null
-            let correctToken = null
+            let correctApi = null;
+            let correctToken = null;
 
-            if (deviceType === 'tv') {
-                correctApi = androidApi
+            if (deviceType === "tv") {
+                correctApi = androidApi;
             } else {
-                correctApi = `${API_BASE_URL}/`
+                correctApi = `${API_BASE_URL}/`;
             }
             const response = await fetch(`${correctApi}devices/${deviceId}`, {
                 headers: {
-                    'Authorization': `Bearer ${token}`
-                }
+                    Authorization: `Bearer ${token}`,
+                },
             });
 
             if (response.ok) {
                 const deviceData: Device = await response.json();
                 setDevice(deviceData);
                 if (deviceData.scheduled_playlist_id) {
-                    setSelectedSetup(deviceData.scheduled_playlist_id.toString());
+                    setSelectedSetup(
+                        deviceData.scheduled_playlist_id.toString()
+                    );
                 }
             } else if (response.status === 401) {
                 handleUnauthorized();
             } else {
-                throw new Error(`Failed to fetch device details: ${response.status}`);
+                throw new Error(
+                    `Failed to fetch device details: ${response.status}`
+                );
             }
         } catch (error) {
             console.error("Error fetching device details:", error);
@@ -189,7 +200,7 @@ const Snapshot = () => {
     };
 
     const handleSetupChange = (value: string) => {
-        console.log(value)
+        console.log(value);
         setSelectedSetup(value);
     };
 
@@ -197,32 +208,34 @@ const Snapshot = () => {
         try {
             setIsAssigning(true);
             setMessage("Capturing Snapshot...");
-            const token = localStorage.getItem('authToken');
+            const token = localStorage.getItem("authToken");
             if (!token) {
                 handleUnauthorized();
                 return;
             }
 
             // proxy if pi device otherwise android api directlly
-            let correctApi = null
+            let correctApi = null;
 
-            if (deviceType === 'tv') {
-                correctApi = androidApi
+            if (deviceType === "tv") {
+                correctApi = androidApi;
             } else {
-                correctApi = `${API_BASE_URL}/`
+                correctApi = `${API_BASE_URL}/`;
             }
             const response = await fetch(`${correctApi}devices/${deviceId}`, {
-                method: 'PUT',
+                method: "PUT",
                 headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
                 },
-                body: JSON.stringify({ scheduled_playlist_id: Number.parseInt(selectedSetup || "") }),
+                body: JSON.stringify({
+                    scheduled_playlist_id: Number.parseInt(selectedSetup || ""),
+                }),
             });
 
             if (response.ok) {
                 setMessage("Setup assigned successfully");
-                await new Promise(resolve => setTimeout(resolve, 500));
+                await new Promise((resolve) => setTimeout(resolve, 500));
                 fetchDevice(); // Refresh device data after assignment
             } else if (response.status === 401) {
                 handleUnauthorized();
@@ -239,27 +252,36 @@ const Snapshot = () => {
 
     const rebootDevice = async () => {
         try {
-            const token = localStorage.getItem('authToken');
+            const token = localStorage.getItem("authToken");
             if (!token) {
                 handleUnauthorized();
                 return;
             }
             setIsRebooting(true);
 
-            alert("Press OK to send restart command sent, wait 15-20 seconds and check device");
+            alert(
+                "Press OK to send restart command sent, wait 15-20 seconds and check device"
+            );
 
-            const response = await fetch(`${API_BASE_URL}/reboot-device/${deviceId}`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ scheduled_playlist_id: Number.parseInt(selectedSetup || "") }),
-            });
+            const response = await fetch(
+                `${API_BASE_URL}/reboot-device/${deviceId}`,
+                {
+                    method: "POST",
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        scheduled_playlist_id: Number.parseInt(
+                            selectedSetup || ""
+                        ),
+                    }),
+                }
+            );
 
             if (response.ok) {
                 setIsRebooting(false);
-                router.push('/dashboard/devices');
+                router.push("/dashboard/devices");
             } else if (response.status === 401) {
                 handleUnauthorized();
             } else {
@@ -274,7 +296,7 @@ const Snapshot = () => {
     };
 
     const updateDevice = async () => {
-        const token = localStorage.getItem('authToken');
+        const token = localStorage.getItem("authToken");
         if (!token) {
             handleUnauthorized();
             return;
@@ -283,14 +305,14 @@ const Snapshot = () => {
         if (!device) return;
         try {
             const response = await fetch(`${API_BASE_URL}/sync/${deviceId}`, {
-                method: 'POST',
+                method: "POST",
                 headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
-                    "bucket_name": "os-versions"
-                })
+                    bucket_name: "os-versions",
+                }),
             });
 
             if (response.ok) {
@@ -311,29 +333,30 @@ const Snapshot = () => {
     const captureSnapshot = async () => {
         if (!device) return;
         try {
-
-            const token = localStorage.getItem('authToken');
+            const token = localStorage.getItem("authToken");
             if (!token) {
-                router.push('/login');
+                router.push("/login");
                 return;
             }
 
             // proxy if pi device otherwise android api directlly
-            let correctApi = null
+            let correctApi = null;
 
-            if (deviceType === 'tv') {
-                correctApi = androidApi
+            if (deviceType === "tv") {
+                correctApi = androidApi;
             } else {
-                correctApi = `${API_BASE_URL}/`
+                correctApi = `${API_BASE_URL}/`;
             }
 
-            
-            const response = await fetch(`${correctApi}take_screenshot/${deviceId}`, {
-                method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${token}`
+            const response = await fetch(
+                `${correctApi}take_screenshot/${deviceId}`,
+                {
+                    method: "GET",
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
                 }
-            });
+            );
 
             if (response.ok) {
                 const snapshotBlob = await response.blob();
@@ -356,29 +379,28 @@ const Snapshot = () => {
         if (!confirm("Are you sure you want to delete this device?")) return;
 
         try {
-            const token = localStorage.getItem('authToken');
+            const token = localStorage.getItem("authToken");
             if (!token) {
                 handleUnauthorized();
                 return;
             }
 
+            let correctApi = null;
 
-            let correctApi = null
-
-            if (deviceType === 'tv') {
-                correctApi = androidApi
+            if (deviceType === "tv") {
+                correctApi = androidApi;
             } else {
-                correctApi = `${API_BASE_URL}/`
+                correctApi = `${API_BASE_URL}/`;
             }
             const response = await fetch(`${correctApi}devices/${deviceId}`, {
-                method: 'DELETE',
+                method: "DELETE",
                 headers: {
-                    'Authorization': `Bearer ${token}`,
+                    Authorization: `Bearer ${token}`,
                 },
             });
 
             if (response.ok) {
-                router.push('/dashboard/devices');
+                router.push("/dashboard/devices");
             } else if (response.status === 401) {
                 handleUnauthorized();
             } else {
@@ -391,79 +413,99 @@ const Snapshot = () => {
     };
 
     if (isLoading) {
-        return <div className="min-h-screen p-6 flex flex-col container">Loading...</div>;
+        return (
+            <div className="min-h-screen p-6 flex flex-col container">
+                Loading...
+            </div>
+        );
     }
 
     if (error) {
-        return <div className="min-h-screen p-6 flex flex-col container">Error: {error}</div>;
+        return (
+            <div className="min-h-screen p-6 flex flex-col container">
+                Error: {error}
+            </div>
+        );
     }
 
     const convertToUserTimezone = (utcDateString) => {
         if (utcDateString) {
-            const utcDate = new Date(utcDateString.replace(' ', 'T') + 'Z');
+            const utcDate = new Date(utcDateString.replace(" ", "T") + "Z");
 
             const options = {
-                year: 'numeric',
-                month: '2-digit',
-                day: '2-digit',
-                hour: '2-digit',
-                minute: '2-digit',
-                hour12: false // Use 24-hour format
+                year: "numeric",
+                month: "2-digit",
+                day: "2-digit",
+                hour: "2-digit",
+                minute: "2-digit",
+                hour12: false, // Use 24-hour format
             };
 
             return utcDate.toLocaleString(undefined, options);
-        }
-        else {
-            return "N/A"
+        } else {
+            return "N/A";
         }
     };
 
-    const assignedSetup = device?.scheduled_playlist_id ? playlists[device.scheduled_playlist_id] : undefined;
-    const selectedSetupName = device?.scheduled_playlist_id ? playlists[device.scheduled_playlist_id] : undefined;
+    const assignedSetup = device?.scheduled_playlist_id
+        ? playlists[device.scheduled_playlist_id]
+        : undefined;
+    const selectedSetupName = device?.scheduled_playlist_id
+        ? playlists[device.scheduled_playlist_id]
+        : undefined;
 
     const mobileMainContainerStyle = {
-        display: 'flex',
-		justifyContent: 'space-between',
-    }
+        display: "flex",
+        justifyContent: "space-between",
+    };
 
     const mobileBtnsContainerStyle = {
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'flex-end',
-        gap: '5px',
-    }
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "flex-end",
+        gap: "5px",
+    };
 
     const mobileSetupContainerStyle = {
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '5px',
-    }
+        display: "flex",
+        flexDirection: "column",
+        gap: "5px",
+    };
 
     const mobileSetupHeaderStyle = {
-        width: '100%',
-    }
+        width: "100%",
+    };
 
     const mobileSetupBodyStyle = {
-        width: '100%',
-        display: 'flex',
-        justifyContent: 'flex-end',
-    }
+        width: "100%",
+        display: "flex",
+        justifyContent: "flex-end",
+    };
 
     return (
         <div className="min-h-screen p-6 flex flex-col container">
             <h1 className="text-3xl font-bold mb-6">Device Snapshot</h1>
 
-            <div className="mb-4 flex justify-between items-center" style={isMobile ? mobileMainContainerStyle : null}>
+            <div
+                className="mb-4 flex justify-between items-center"
+                style={isMobile ? mobileMainContainerStyle : null}
+            >
                 <p>Device: {device?.name || deviceId}</p>
-                <div className="space-x-2" style={isMobile ? mobileBtnsContainerStyle : null}>
-                    <Button
-                        onClick={rebootDevice}
-                        disabled={isRebooting}
-                        className={"bg-green-800"}
-                    >
-                        <RotateCcw className="mr-2 h-4 w-4" />
-                        {isRebooting ? "Restarting..." : "Restart Device"}
-                    </Button>
+                <div
+                    className="space-x-2"
+                    style={isMobile ? mobileBtnsContainerStyle : null}
+                >
+                    {deviceType !== "tv" ? (
+                        <Button
+                            onClick={rebootDevice}
+                            disabled={isRebooting}
+                            className={"bg-green-800"}
+                        >
+                            <RotateCcw className="mr-2 h-4 w-4" />
+                            {isRebooting ? "Restarting..." : "Restart Device"}
+                        </Button>
+                    ) : null}
+
                     <Button
                         onClick={deleteDevice}
                         variant="destructive"
@@ -472,40 +514,73 @@ const Snapshot = () => {
                         <Trash2 className="mr-2 h-4 w-4" />
                         Delete Device
                     </Button>
-                    <Button
-                        onClick={updateDevice}
-                        variant="destructive"
-                        className={"bg-gray-800"}
-                    >
-                        <Cog className="mr-2 h-4 w-4" />
-                        Update OS
-                    </Button>
+                    {deviceType !== "tv" ? (
+                        <Button
+                            onClick={updateDevice}
+                            variant="destructive"
+                            className={"bg-gray-800"}
+                        >
+                            <Cog className="mr-2 h-4 w-4" />
+                            Update OS
+                        </Button>
+                    ) : null}
                 </div>
             </div>
-            <p className="mb-4">Location: {device?.location || 'N/A'}</p>
-            <p className="mb-4">Last Seen: {convertToUserTimezone(device?.last_seen || '') || 'N/A'}</p>
+            <p className="mb-4">Location: {device?.location || "N/A"}</p>
+            <p className="mb-4">
+                Last Seen:{" "}
+                {convertToUserTimezone(device?.last_seen || "") || "N/A"}
+            </p>
 
-            <div className="flex justify-between items-center mb-8" style={isMobile ? mobileSetupContainerStyle : null}>
-                <h3 className="text-2xl font-semibold" style={isMobile ? mobileSetupHeaderStyle : null}>Select Setup</h3>
-                <div className="flex items-center space-x-4" style={isMobile ? mobileSetupBodyStyle : null}>
-                    <Select onValueChange={handleSetupChange} value={selectedSetup || undefined}>
+            <div
+                className="flex justify-between items-center mb-8"
+                style={isMobile ? mobileSetupContainerStyle : null}
+            >
+                <h3
+                    className="text-2xl font-semibold"
+                    style={isMobile ? mobileSetupHeaderStyle : null}
+                >
+                    Select Setup
+                </h3>
+                <div
+                    className="flex items-center space-x-4"
+                    style={isMobile ? mobileSetupBodyStyle : null}
+                >
+                    <Select
+                        onValueChange={handleSetupChange}
+                        value={selectedSetup || undefined}
+                    >
                         <SelectTrigger className="w-[180px]">
                             <SelectValue placeholder="Select Setup">
-                                {selectedSetupName || (assignedSetup ? `${assignedSetup} (Assigned)` : 'Select Setup')}
+                                {selectedSetupName ||
+                                    (assignedSetup
+                                        ? `${assignedSetup} (Assigned)`
+                                        : "Select Setup")}
                             </SelectValue>
                         </SelectTrigger>
                         <SelectContent>
-                            {playlistObjects.map(playlistObj => (
-                                <SelectItem key={Object.keys(playlistObj.data)[0]} value={playlistObj.id.toString()} className="flex justify-between items-center">
+                            {playlistObjects.map((playlistObj) => (
+                                <SelectItem
+                                    key={Object.keys(playlistObj.data)[0]}
+                                    value={playlistObj.id.toString()}
+                                    className="flex justify-between items-center"
+                                >
                                     {playlistObj.playlist_name}
-                                    {playlistObj.id === device?.scheduled_playlist_id && " (Assigned)"}
+                                    {playlistObj.id ===
+                                        device?.scheduled_playlist_id &&
+                                        " (Assigned)"}
                                 </SelectItem>
                             ))}
                         </SelectContent>
                     </Select>
                     <Button
                         onClick={assignSetup}
-                        disabled={!selectedSetup || isAssigning || selectedSetup === device?.scheduled_playlist_id?.toString()}
+                        disabled={
+                            !selectedSetup ||
+                            isAssigning ||
+                            selectedSetup ===
+                                device?.scheduled_playlist_id?.toString()
+                        }
                         className={isAssigning ? "bg-green-800" : ""}
                     >
                         {isAssigning ? "Assigning..." : "Assign Setup"}
@@ -513,16 +588,21 @@ const Snapshot = () => {
                 </div>
             </div>
 
-            {message && (
-                <p className="mt-4 text-green-500">{message}</p>
-            )}
+            {message && <p className="mt-4 text-green-500">{message}</p>}
 
             <div className="mt-8 justify-center items-center w-full">
                 <h3 className="text-2xl font-semibold mb-4">Device Snapshot</h3>
-                {snapshotUrl ?
-                    <Image src={snapshotUrl} alt="Device Snapshot" width={800} height={600} className="rounded-lg shadow-md" /> :
+                {snapshotUrl ? (
+                    <Image
+                        src={snapshotUrl}
+                        alt="Device Snapshot"
+                        width={800}
+                        height={600}
+                        className="rounded-lg shadow-md"
+                    />
+                ) : (
                     <div>Loading...</div>
-                }
+                )}
             </div>
         </div>
     );

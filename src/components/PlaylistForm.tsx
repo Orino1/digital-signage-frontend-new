@@ -123,7 +123,7 @@ const MediaItem = ({ media, onClick, type }: { media: MediaItem; onClick: () => 
 
 
 
-const PlaylistForm: React.FC<PlaylistFormProps> = ({ onSave, initialSchedules, isEditing = false, devices = 0, inputClassName, playlistName, setPlaylistName }) => {
+const PlaylistForm: React.FC<PlaylistFormProps> = ({ onSave, initialSchedules, isEditing = false, devices = 0, inputClassName, playlistName, setPlaylistName, androidDevicesCount }) => {
     const router = useRouter();
     const [schedules, setSchedules] = useState<PlaylistData>(() => {
         return { ...initialSchedules };
@@ -336,7 +336,7 @@ const PlaylistForm: React.FC<PlaylistFormProps> = ({ onSave, initialSchedules, i
             };
 
             console.log(schedules);
-            if (schedules.devices && confirm(`Are you sure you want to save this changes? ${schedules.devices.length} devices will be updated.`)) {
+            if (schedules.devices && confirm(`Are you sure you want to save this changes? ${schedules.devices.length} Raspberry Pi devices and ${androidDevicesCount} Android TV devices will be updated.`)) {
                 // Save it!
                 onSave(adjustedData);
                 console.log('Thing was saved to the database.');

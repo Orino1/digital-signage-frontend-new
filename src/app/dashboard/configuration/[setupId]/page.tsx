@@ -76,6 +76,7 @@ const Configuration = () => {
     const [isSaving, setIsSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [playlistName, setPlaylistName] = useState<string>("");
+    const [androidDevicesCount, setAndroidDevicesCount] = useState<number>(0)
 
     const fetchSetup = useCallback(async () => {
         try {
@@ -110,6 +111,7 @@ const Configuration = () => {
                 setPlaylist(raspData);
                 const raspDevices = raspData.devices || [];
                 const androidDevices = androidData.devices || [];
+                setAndroidDevicesCount(androidDevices.length)
                 const mergedDevices = [...raspDevices, ...androidDevices];
                 setDevices(mergedDevices);
                 setPlaylistName(raspData.playlist_name || "");
@@ -289,6 +291,7 @@ const Configuration = () => {
                         <PlaylistForm
                             onSave={handleSavePlaylist}
                             initialSchedules={playlist}
+                            androidDevicesCount={androidDevicesCount}
                             isEditing={setupId !== "new"}
                             devices={devices.length}
                             inputClassName="bg-white text-black placeholder-gray-500"
